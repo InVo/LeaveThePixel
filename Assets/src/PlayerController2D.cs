@@ -4,7 +4,8 @@ using UnityEngine.UI;
 [RequireComponent(typeof(Animator))]
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(BoxCollider2D))]
-public class PlayerController2D : MonoBehaviour {
+public class PlayerController2D : MonoBehaviour
+{
 
     public Animator animator;
 
@@ -29,13 +30,13 @@ public class PlayerController2D : MonoBehaviour {
         _collider = GetComponent<BoxCollider2D>();
     }
 
-	// Use this for initialization
-	void Start () {
-		
-	}
-	
-	// Update is called once per frame
-	void Update () {
+    // Use this for initialization
+    void Start() {
+
+    }
+
+    // Update is called once per frame
+    void Update() {
         float vInput = Input.GetAxis(axisYName);
         float hInput = Input.GetAxis(axisXName);
 
@@ -51,24 +52,26 @@ public class PlayerController2D : MonoBehaviour {
             var currentSpeedX = hInput != 0 ? speedX * Mathf.Sign(hInput) : 0;
             var currentSpeedY = vInput != 0 ? speedY * Mathf.Sign(vInput) : 0;
 
-            var moveDirection = new Vector3(currentSpeedX, currentSpeedY);
-            RaycastHit2D hit = Physics2D.Raycast(transform.position, moveDirection, _collider.size.x / 2);
-            if (hit != null) {
-                _rigidbody.velocity = new Vector2(0f, 0f);
+            //Check vertical colliding
+            if (currentSpeedY != 0) {
+                RaycastHit2D hit = Physics2D.Raycast(transform.position, new Vector2(0, currentSpeedY), _collider.size.y / 2);
+                if (hit.collider != null) {
+                    currentSpeedY = 0f;
+                }
             }
+
+            //Check horizontal colliding
+            if (currentSpeedX != 0) {
+                RaycastHit2D hit = Physics2D.Raycast(transform.position, new Vector2(currentSpeedX, 0), _collider.size.x / 2);
+                if (hit.collider != null) {
+                    currentSpeedX = 0f;
+                }
+            }
+
             _rigidbody.velocity = new Vector2(currentSpeedX, currentSpeedY);
-            
         }
-        else
-        {
+        else {
             _rigidbody.velocity = new Vector2(0, 0);
         }
-	}
-
-    public void OnTriggerEnter2D(Collider2D other) {
-        float contactPosition = other.bounds.center.x - other.bounds.size.x / 2;
-        float myWidth = _collider.bounds.size.x;
-        float posX = contactPosition + myWidth / 2f;
-        //_rigidbody.MovePosition(new Vector3(posX, transform.localPosition.y, transform.localPosition.z));
     }
 }
