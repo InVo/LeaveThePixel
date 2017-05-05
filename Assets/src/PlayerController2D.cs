@@ -32,7 +32,14 @@ public class PlayerController2D : MonoBehaviour
 
     private Vector3 _currentMovement = new Vector3(0, 0);
 
+    private LayerMask _collisionMask;
+    private LayerMask _interactionMask;
+
     void Awake() {
+
+        _collisionMask = LayerMask.GetMask("Block", "Block and interact");
+        _interactionMask = LayerMask.GetMask("Interact", "Block and interact");
+
         _rigidbody = GetComponent<Rigidbody2D>();
         _collider = GetComponent<BoxCollider2D>();
         _animationHashes = new Dictionary<int, string>();
@@ -58,9 +65,13 @@ public class PlayerController2D : MonoBehaviour
         verticalText.text = vInput.ToString();
         horizontalText.text = hInput.ToString();
 
+        CheckMovement(vInput, hInput);
+        CheckItemsInteraction();
+    }
+
+    private void CheckMovement(float vInput, float hInput) {
         Vector3 movement = Vector3.zero;
         if (vInput != 0 || hInput != 0) {
-            //animator.SetBool("moving", true);
             var currentSpeedX = hInput != 0 ? speedX * Mathf.Sign(hInput) : 0;
             var currentSpeedY = vInput != 0 ? speedY * Mathf.Sign(vInput) : 0;
 
@@ -69,7 +80,7 @@ public class PlayerController2D : MonoBehaviour
                 if (Mathf.Abs(_currentMovement.y) < FLOAT_EPSILON) {
                     // X-axis move is prioritized
                     currentSpeedY = 0;
-                    RaycastHit2D hit = Physics2D.Raycast(transform.position, new Vector2(currentSpeedX, 0), _collider.size.x / 2);
+                    RaycastHit2D hit = Physics2D.Raycast(transform.position, new Vector2(currentSpeedX, 0), _collider.size.x / 2, _collisionMask, 0f);
                     if (hit.collider != null) {
                         currentSpeedX = 0f;
                     }
@@ -82,7 +93,7 @@ public class PlayerController2D : MonoBehaviour
             //Check vertical colliding
             if (currentSpeedY != 0) {
                 if (Mathf.Abs(_currentMovement.x) < FLOAT_EPSILON) {
-                    RaycastHit2D hit = Physics2D.Raycast(transform.position, new Vector2(0, currentSpeedY), _collider.size.y / 2);
+                    RaycastHit2D hit = Physics2D.Raycast(transform.position, new Vector2(0, currentSpeedY), _collider.size.y / 2, _collisionMask, 0f);
                     if (hit.collider != null) {
                         currentSpeedY = 0f;
                     }
@@ -98,6 +109,15 @@ public class PlayerController2D : MonoBehaviour
         if ((movement - _currentMovement).magnitude > FLOAT_EPSILON) {
             _currentMovement = movement;
             TriggerAnimations();
+        }
+    }
+
+    private void CheckItemsInteraction() {
+        if (_currentMovement.magnitude > FLOAT_EPSILON) {
+            RaycastHit2D hit = Physics2D.Raycast(transform.position, _currentMovement, _collider.size.y / 2, _interactionMask, 0f);
+            if (hit.collider != null) {
+                Destroy(hit.collider.gameObject);
+            }
         }
     }
 
